@@ -1,10 +1,10 @@
 // =====================================================
 //  Service Worker لتطبيق "احسبلي+ · يومي"
-//  الإصدار: v2.0.0 (متوافق مع الجذر التام)
+//  الإصدار: v4.0.0 (محدث)
 //  الاستراتيجية: تخزين مسبق + Stale-While-Revalidate
 // =====================================================
 
-const CACHE_NAME = 'hasbali-cache-v3';
+const CACHE_NAME = 'hasbali-cache-v4';
 const STATIC_ASSETS = [
   './',                          // يخزن index.html تلقائياً
   './manifest.json',
@@ -18,15 +18,15 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] ✅ تخزين الملفات الأساسية...');
+        console.log('[SW v4] ✅ تخزين الملفات الأساسية...');
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('[SW] ✅ التثبيت اكتمل بنجاح');
+        console.log('[SW v4] ✅ التثبيت اكتمل بنجاح');
         return self.skipWaiting();
       })
       .catch((error) => {
-        console.error('[SW] ❌ فشل التخزين:', error);
+        console.error('[SW v4] ❌ فشل التخزين (تأكد من وجود الأيقونات):', error);
       })
   );
 });
@@ -39,14 +39,14 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((name) => {
             if (name !== CACHE_NAME) {
-              console.log('[SW] 🗑️ حذف الكاش القديم:', name);
+              console.log('[SW v4] 🗑️ حذف الكاش القديم:', name);
               return caches.delete(name);
             }
           })
         );
       })
       .then(() => {
-        console.log('[SW] ✅ التفعيل اكتمل، السيطرة على جميع الصفحات');
+        console.log('[SW v4] ✅ التفعيل اكتمل، السيطرة على جميع الصفحات');
         return self.clients.claim();
       })
   );
@@ -57,7 +57,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 1. استراتيجية خاصة للتنقل (الصفحات الرئيسية)
-  //    نخدم من الكاش أولاً، ثم نحدث في الخلفية
   if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match(event.request)
@@ -72,7 +71,7 @@ self.addEventListener('fetch', (event) => {
               return networkResponse;
             })
             .catch(() => {
-              console.warn('[SW] ⚠️ الشبكة غير متوفرة، نخدم من الكاش فقط');
+              console.warn('[SW v4] ⚠️ الشبكة غير متوفرة، نخدم من الكاش فقط');
             });
           return cachedResponse || fetchPromise;
         })
@@ -81,7 +80,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. استراتيجية Stale-While-Revalidate للملفات الثابتة
-  //    (JS, CSS, Images, CDN)
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
@@ -95,7 +93,7 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           })
           .catch((error) => {
-            console.warn('[SW] ⚠️ فشل جلب المورد:', event.request.url);
+            console.warn('[SW v4] ⚠️ فشل جلب المورد:', event.request.url);
             if (!cachedResponse) {
               return new Response('⚠️ غير متاح حالياً', { status: 503 });
             }
