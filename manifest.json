@@ -2,8 +2,9 @@
   "name": "احسبلي+ · يومي",
   "short_name": "احسبلي+",
   "description": "أداة إدارة الحسابات اليومية للورديات بكل دقة واحترافية",
-  "start_url": "./",
+  "start_url": "./?utm_source=pwa",
   "display": "standalone",
+  "display_override": ["standalone"],
   "orientation": "portrait",
   "background_color": "#0a0a0a",
   "theme_color": "#f5a623",
@@ -31,6 +32,13 @@
       "short_name": "فتح",
       "description": "فتح تطبيق احسبلي+",
       "url": "./"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
     }
   ]
 }
