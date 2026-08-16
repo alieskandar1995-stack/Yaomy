@@ -2,43 +2,35 @@
   "name": "احسبلي+ · يومي",
   "short_name": "احسبلي+",
   "description": "أداة إدارة الحسابات اليومية للورديات بكل دقة واحترافية",
-  "start_url": "/احسبلي.html",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0a0a",
   "theme_color": "#f5a623",
-  "scope": "/",
+  "scope": "./",
   "categories": ["finance", "productivity", "business"],
   "lang": "ar",
   "dir": "rtl",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
-  "prefer_related_applications": false,
   "shortcuts": [
     {
-      "name": "اليوم",
-      "short_name": "اليوم",
-      "description": "عرض ورديات اليوم",
-      "url": "/احسبلي.html?tab=daily"
-    },
-    {
-      "name": "التقارير",
-      "short_name": "التقارير",
-      "description": "عرض التقارير اليومية والأسبوعية",
-      "url": "/احسبلي.html?tab=reports"
+      "name": "فتح التطبيق",
+      "short_name": "فتح",
+      "description": "فتح تطبيق احسبلي+",
+      "url": "./"
     }
   ]
 }
