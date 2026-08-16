@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <meta name="theme-color" content="#f5a623" />
+    <title>احسبلي+ · يومي</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="احسبلي+" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js">
+    </script>
+
+    <style>
+        /* ========== الأنماط الأساسية ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #e8e6e3;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .app-container {
+            max-width: 100%;
+            width: 100%;
+            min-height: 100vh;
+            background: #0a0a0a;
+            padding: 10px 12px 0;
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto;
+        }
+        .glass-card {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 12px 0;
+            margin-bottom: 12px;
+        }
+        .glass-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #f5e7c8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 80px;
+        }
+        .form-group label {
+            font-size: 13px;
+            color: #a8a6b0;
+        }
+        .form-group input {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+        .form-group input:focus {
+            border-color: #f5a623;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            min-height: 44px;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f7d875, #e8a317);
+            color: #0a0a0a;
+        }
+        .btn-gold:hover {
+            transform: scale(1.02);
+        }
+        .btn-gold-outline {
+            background: transparent;
+            border: 1.5px solid #f5a623;
+            color: #f5a623;
+        }
+        .btn-gold-outline:hover {
+            background: rgba(245, 166, 35, 0.08);
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 12px;
+            min-height: 30px;
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        .panel {
+            display: none;
+            animation: fadeUp 0.35s ease;
+            flex: 1;
+        }
+        .panel.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(18px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== زر التثبيت ===== */
+        .install-btn-wrapper {
+            display: none;
+            /* يظهر فقط عند توفر حدث التثبيت */
+            margin-bottom: 8px;
+        }
+        .install-btn-wrapper.show {
+            display: block;
+        }
+        .btn-install {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f7d875, #e8a317);
+            color: #0a0a0a;
+            font-weight: 700;
+            font-size: 16px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(245, 166, 35, 0.3);
+            transition: 0.25s;
+            min-height: 54px;
+        }
+        .btn-install:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(245, 166, 35, 0.5);
+        }
+        .btn-install .icon {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        /* شريط التنقل السفلي */
+        .bottom-nav {
+            position: sticky;
+            bottom: 0;
+            background: #0a0a0a;
+            border-top: 2px solid rgba(245, 166, 35, 0.25);
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 4px 10px;
+            margin-top: 16px;
+            z-index: 50;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+        }
+        .nav-item {
+            background: transparent;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: #6a6868;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 6px;
+            transition: 0.2s;
+            font-family: inherit;
+            position: relative;
+            flex: 1;
+            min-width: 40px;
+            min-height: 52px;
+            justify-content: center;
+        }
+        .nav-item .nav-icon {
+            font-size: 22px;
+            line-height: 1;
+        }
+        .nav-item .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .nav-item.active {
+            color: #f5a623;
+            text-shadow: 0 0 30px rgba(245, 166, 35, 0.9);
+        }
+        .nav-item.active .nav-icon {
+            transform: scale(1.05);
+        }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            width: 24px;
+            height: 4px;
+            background: #f5a623;
+            border-radius: 10px;
+            box-shadow: 0 0 30px #f5a623;
+        }
+
+        /* رأس التطبيق */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .app-title {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f7d875, #e8a317);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px 10px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+        }
+        .date-selector label {
+            font-size: 13px;
+            color: #a8a6b0;
+        }
+        .date-selector input[type="date"] {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 14px;
+            outline: none;
+            width: 140px;
+        }
+        .date-selector input[type="date"]:focus {
+            border-color: #f5a623;
+        }
+
+        /* ====== تبويب يومي ====== */
+        .daily-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 10px 0;
+        }
+        .shift-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 14px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .shift-card.state-editing {
+            border-color: #f5a623;
+            box-shadow: 0 0 15px rgba(245, 166, 35, 0.15);
+        }
+        .shift-card.state-saved {
+            border-color: #4ade80;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.08);
+        }
+        .shift-card.state-saved .shift-fields input,
+        .shift-card.state-saved .invoice-entry input,
+        .shift-card.state-saved .add-invoice-btn {
+            background: rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .shift-card.state-saved .add-invoice-btn {
+            cursor: not-allowed;
+        }
+        .shift-card .shift-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f5e7c8;
+            text-align: center;
+        }
+        .shift-card .shift-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .shift-card .form-group {
+            margin-bottom: 4px;
+        }
+        .shift-card .form-group label {
+            font-size: 12px;
+        }
+        .shift-card .form-group input {
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+        .shift-card .shift-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .shift-card .shift-actions .btn {
+            flex: 1;
+            min-height: 36px;
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+        .shift-card .invoice-entry {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .shift-card .invoice-entry input {
+            flex: 1;
+            min-width: 60px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+        }
+        .shift-card .invoice-entry input:focus {
+            border-color: #f5a623;
+        }
+        .shift-card .invoice-entry .btn {
+            flex: 0 0 auto;
+            min-height: 32px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+        .shift-card .invoice-list {
+            margin-top: 6px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .shift-card .invoice-list .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 13px;
+            gap: 6px;
+        }
+        .shift-card .invoice-list .invoice-item .inv-name {
+            flex: 1;
+            color: #d0ccc6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .shift-card .invoice-list .invoice-item .inv-amount {
+            color: #f5a623;
+            font-weight: 600;
+            margin: 0 6px;
+        }
+        .shift-card .invoice-list .invoice-item .inv-del {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+        }
+        .shift-card .invoice-list .invoice-item .inv-del:hover {
+            color: #ff6b6b;
+        }
+
+        .daily-summary {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .daily-summary .stat {
+            text-align: center;
+        }
+        .daily-summary .stat .label {
+            font-size: 12px;
+            color: #a8a6b0;
+        }
+        .daily-summary .stat .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f5a623;
+        }
+
+        /* ====== تبويب التقارير ====== */
+        .report-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 40px;
+            padding: 4px;
+            border: 1px solid rgba(255, 215, 0, 0.06);
+        }
+        .report-tabs .tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: #a8a6b0;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .report-tabs .tab-btn.active {
+            background: #f5a623;
+            color: #0a0a0a;
+            box-shadow: 0 2px 12px rgba(245, 166, 35, 0.3);
+        }
+        .report-tabs .tab-btn:hover:not(.active) {
+            color: #f5e7c8;
+        }
+
+        .report-panel {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+        .report-panel.active {
+            display: block;
+        }
+
+        .report-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+        .report-controls .form-group {
+            flex: 1 1 120px;
+            min-width: 100px;
+        }
+        .report-controls .form-group label {
+            font-size: 12px;
+            color: #a8a6b0;
+        }
+        .report-controls .form-group input {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .report-controls .btn {
+            min-height: 40px;
+            padding: 8px 18px;
+            font-size: 14px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px;
+        }
+        .report-actions .btn {
+            min-height: 36px;
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 8px 0;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 0;
+            width: 100%;
+            display: block;
+        }
+        .table-wrap table {
+            width: 100%;
+            min-width: 500px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .table-wrap table th {
+            text-align: right;
+            padding: 10px 6px;
+            background: rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            white-space: nowrap;
+        }
+        .table-wrap table td {
+            padding: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            white-space: nowrap;
+        }
+        .table-wrap table td:first-child,
+        .table-wrap table th:first-child {
+            padding-right: 12px;
+        }
+
+        .weekly-shifts-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .weekly-shifts-summary .shift-card-summary {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 14px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+            text-align: center;
+        }
+        .weekly-shifts-summary .shift-card-summary .title {
+            font-weight: 600;
+            color: #f5e7c8;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .weekly-shifts-summary .shift-card-summary .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            color: #a8a6b0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .weekly-shifts-summary .shift-card-summary .row .val {
+            color: #f5a623;
+            font-weight: 600;
+        }
+        .report-totals {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .report-totals .stat {
+            text-align: center;
+        }
+        .report-totals .stat .label {
+            font-size: 12px;
+            color: #a8a6b0;
+        }
+        .report-totals .stat .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f5a623;
+        }
+
+        /* ====== تبويب سجلات ====== */
+        .record-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .record-card .info {
+            flex: 1;
+            min-width: 150px;
+        }
+        .record-card .info .name {
+            font-weight: 600;
+            color: #f5e7c8;
+            font-size: 15px;
+        }
+        .record-card .info .meta {
+            font-size: 13px;
+            color: #a8a6b0;
+        }
+        .record-card .actions {
+            display: flex;
+            gap: 6px;
+        }
+        .record-card .actions .btn {
+            min-height: 32px;
+            font-size: 12px;
+            padding: 4px 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(22, 22, 26, 0.94);
+            backdrop-filter: blur(14px);
+            padding: 14px 24px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            color: #f0ede8;
+            font-weight: 500;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            display: none;
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            display: block;
+            animation: toastIn 0.4s ease;
+        }
+        @keyframes toastIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(30px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* شاشة البداية */
+        .splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            transition: opacity 0.6s, visibility 0.6s;
+            opacity: 1;
+            visibility: visible;
+            padding: 20px;
+        }
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .splash-logo {
+            width: 140px;
+            height: 140px;
+            z-index: 2;
+            animation: logoSpin 1.8s ease-in-out forwards;
+        }
+        .splash-logo img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+            background: #f5a623;
+            padding: 10px;
+        }
+        @keyframes logoSpin {
+            0% { transform: rotate(0) scale(0.8); opacity: 0; }
+            30% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+            70% { transform: rotate(340deg) scale(1); opacity: 1; }
+            100% { transform: rotate(360deg) scale(1.05); opacity: 1; }
+        }
+        .splash-progress-wrap {
+            width: 200px;
+            max-width: 70%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        .splash-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #8b6b2c, #d4a843, #8b6b2c);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            animation: progressMove 1.8s ease-in-out forwards, shimmer 1.2s infinite alternate;
+        }
+        @keyframes progressMove {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        @keyframes shimmer {
+            0% { background-position: 0%; }
+            100% { background-position: 100%; }
+        }
+        .splash-skip {
+            position: absolute;
+            bottom: 30px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            z-index: 3;
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
+        }
+        .splash-skip:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* ===== شاشة الترحيب ===== */
+        .welcome-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 24px;
+            transition: opacity 0.6s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .welcome-screen.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .welcome-content {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .welcome-logo {
+            font-size: 64px;
+            margin-bottom: 8px;
+        }
+        .welcome-content h1 {
+            font-size: 32px;
+            color: #facc15;
+            margin-bottom: 8px;
+        }
+        .welcome-content p {
+            color: #94a3b8;
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        .welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .welcome-buttons .btn-gold-outline {
+            background: transparent;
+            border: 1.5px solid #f5a623;
+            color: #f5a623;
+        }
+        .welcome-buttons .btn-gold-outline:hover {
+            background: rgba(245, 166, 35, 0.08);
+        }
+        .welcome-buttons .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .activation-fields {
+            margin-top: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .activation-fields.open {
+            display: flex;
+        }
+        .activation-fields input {
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+        .activation-fields input:focus {
+            border-color: #f5a623;
+        }
+        .whatsapp-btn {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+            margin-top: 12px;
+            width: 100%;
+        }
+        .whatsapp-btn:hover {
+            transform: scale(1.02);
+            background: #128C7E;
+        }
+        .activation-status {
+            font-size: 14px;
+            margin-top: 8px;
+            color: #facc15;
+            min-height: 24px;
+        }
+        .trial-expired-msg {
+            color: #ef4444;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        /* استجابة */
+        @media (max-width: 600px) {
+            .daily-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .daily-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+            .weekly-shifts-summary {
+                grid-template-columns: 1fr;
+            }
+            .report-tabs .tab-btn {
+                font-size: 12px;
+                padding: 6px 8px;
+            }
+            .record-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .record-card .actions {
+                justify-content: flex-start;
+            }
+            .date-selector input[type="date"] {
+                width: 120px;
+                font-size: 12px;
+            }
+        }
+        @media (max-width: 400px) {
+            .daily-summary {
+                grid-template-columns: 1fr;
+            }
+            .report-totals {
+                grid-template-columns: 1fr;
+            }
+            .date-selector input[type="date"] {
+                width: 100px;
+            }
+        }
+
+        /* مودال حفظ التقرير */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-box {
+            background: #1a1a24;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+        .modal-box h2 {
+            color: #facc15;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+        .modal-box .form-group {
+            margin-bottom: 12px;
+        }
+        .modal-box .form-group label {
+            color: #a8a6b0;
+        }
+        .modal-box .form-group input {
+            width: 100%;
+        }
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+        .modal-box .modal-actions .btn {
+            min-height: 40px;
+            padding: 8px 20px;
+        }
+
+        .shift-invoices-total {
+            font-size: 13px;
+            color: #a8a6b0;
+            text-align: center;
+            margin-top: 4px;
+        }
+        .shift-invoices-total span {
+            color: #f5a623;
+            font-weight: 600;
+        }
+        .daily-detail-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .daily-detail-box .shift-title {
+            font-weight: 600;
+            color: #f5e7c8;
+            margin-bottom: 4px;
+        }
+        .daily-detail-box .row {
+            font-size: 13px;
+            color: #a8a6b0;
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+        .daily-detail-box .row .val {
+            color: #f5a623;
+            font-weight: 600;
+        }
+        .daily-detail-box .inv-detail {
+            font-size: 12px;
+            color: #a8a6b0;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== شاشة البداية (Splash) ===== -->
+    <div class="splash-screen" id="splashScreen">
+        <button class="splash-skip" id="splashSkipBtn">تخطي</button>
+        <div class="splash-logo"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f5a623'/%3E%3Ctext x='50' y='58' font-size='40' text-anchor='middle' fill='%230a0a0a' font-family='sans-serif' font-weight='bold'%3E%24%3C/text%3E%3C/svg%3E" alt="احسبلي+" /></div>
+        <div class="splash-progress-wrap"><div class="splash-progress-bar" id="splashProgress"></div></div>
+    </div>
+
+    <!-- ===== شاشة الترحيب ===== -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-content">
+            <div class="welcome-logo">💰</div>
+            <h1>احسبلي+</h1>
+            <p>أداة إدارة الحسابات اليومية للورديات</p>
+            <div id="trialExpiredMsg" class="trial-expired-msg" style="display:none;">
+                ⚠️ انتهت الفترة التجريبية. يرجى التفعيل للاستمرار.
+            </div>
+            <div class="welcome-buttons">
+                <button class="btn btn-gold" id="startTrialBtn">🚀 بدء تجربة مجانية (7 أيام)</button>
+                <button class="btn btn-gold-outline" id="showActivationBtn">🔑 تفعيل الاشتراك</button>
+            </div>
+            <div class="activation-fields" id="activationFields">
+                <input type="text" id="welcomePhone" placeholder="📱 رقم الهاتف" />
+                <input type="text" id="welcomeCode" placeholder="🔑 كود التفعيل (8 أرقام)" maxlength="8" />
+                <button class="btn btn-gold" id="confirmActivateBtn">تأكيد التفعيل</button>
+                <div class="activation-status" id="welcomeActivationStatus"></div>
+                <button class="whatsapp-btn" id="whatsappRequestBtn">💬 طلب تفعيل عبر واتساب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== التطبيق الرئيسي ===== -->
+    <div class="app-container" id="app" style="display:none;">
+        <header class="app-header">
+            <div class="app-title">احسبلي+ <small>يومي</small></div>
+            <div class="date-selector">
+                <label for="selectedDate">📅 التاريخ:</label>
+                <input type="date" id="selectedDate" />
+            </div>
+        </header>
+
+        <!-- ===== زر تثبيت التطبيق ===== -->
+        <div class="install-btn-wrapper" id="installWrapper">
+            <button class="btn-install" id="installBtn">
+                <span class="icon">📲</span>
+                <span>تثبيت التطبيق</span>
+            </button>
+        </div>
+
+        <!-- ====== تبويب يومي ====== -->
+        <section class="panel active" id="panel-daily">
+            <div class="glass-card">
+                <h3>📅 اليوم <span id="currentDateDisplay"></span></h3>
+                <div class="daily-grid" id="dailyGrid">
+                    <!-- سيتم إنشاء الورديات بواسطة JavaScript -->
+                </div>
+                <div class="daily-summary" id="dailySummary">
+                    <div class="stat"><span class="label">💰 مجمل الصندوق</span><span class="value" id="sumCash">0.00</span></div>
+                    <div class="stat"><span class="label">🌾 مجمل الغلة</span><span class="value" id="sumYield">0.00</span></div>
+                    <div class="stat"><span class="label">📄 مجمل الفواتير</span><span class="value" id="sumInvoices">0.00</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== تبويب التقارير ====== -->
+        <section class="panel" id="panel-reports">
+            <div class="glass-card">
+                <h3>📊 التقارير</h3>
+                <div class="report-tabs" id="reportTabs">
+                    <button class="tab-btn active" data-tab="dailyReport">📅 يومي</button>
+                    <button class="tab-btn" data-tab="weeklyReport">📆 أسبوعي</button>
+                </div>
+                <div class="report-panel active" id="dailyReport">
+                    <div class="report-controls">
+                        <div class="form-group">
+                            <label>التاريخ</label>
+                            <input type="date" id="reportDate" />
+                        </div>
+                        <button class="btn btn-gold" id="loadDailyReport">عرض</button>
+                    </div>
+                    <div id="dailyReportContainer">
+                        <div style="text-align:center; color:#a8a6b0; padding:20px;">اختر تاريخاً لعرض التقرير</div>
+                    </div>
+                </div>
+                <div class="report-panel" id="weeklyReport">
+                    <div class="report-controls">
+                        <div class="form-group">
+                            <label>نهاية الأسبوع</label>
+                            <input type="date" id="weekEnd" />
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الأيام (للخلف)</label>
+                            <input type="number" id="weekDays" value="7" min="1" max="365" />
+                        </div>
+                        <button class="btn btn-gold" id="loadWeeklyReport">عرض</button>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-gold-outline btn-sm" id="saveReportBtn">📌 حفظ التقرير</button>
+                        <button class="btn btn-gold-outline btn-sm" id="exportWeekCSV">📥 تصدير CSV</button>
+                    </div>
+                    <div id="weeklyReportContainer">
+                        <div style="text-align:center; color:#a8a6b0; padding:20px;">اختر نهاية الأسبوع وعدد الأيام لعرض التقرير</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== تبويب سجلات ====== -->
+        <section class="panel" id="panel-records">
+            <div class="glass-card">
+                <h3>📂 السجلات المحفوظة</h3>
+                <div id="recordsList">
+                    <div style="text-align:center; color:#a8a6b0; padding:20px;">لا توجد سجلات محفوظة</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- التنقل السفلي -->
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="nav-item active" data-tab="daily"><span class="nav-icon">📅</span><span class="nav-label">يومي</span></button>
+            <button class="nav-item" data-tab="reports"><span class="nav-icon">📊</span><span class="nav-label">التقارير</span></button>
+            <button class="nav-item" data-tab="records"><span class="nav-icon">📂</span><span class="nav-label">سجلات</span></button>
+        </nav>
+    </div>
+
+    <!-- مودال حفظ التقرير -->
+    <div class="modal-overlay" id="saveReportModal">
+        <div class="modal-box">
+            <h2>📌 حفظ التقرير</h2>
+            <div class="form-group">
+                <label>اسم التقرير</label>
+                <input type="text" id="reportNameInput" placeholder="مثال: الأسبوع الأول من آب" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-gold-outline" id="cancelSaveReport">إلغاء</button>
+                <button class="btn btn-gold" id="confirmSaveReport">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال عرض تقرير محفوظ -->
+    <div class="modal-overlay" id="viewRecordModal">
+        <div class="modal-box" style="max-width:500px; max-height:80vh; overflow-y:auto;">
+            <h2>📄 تفاصيل التقرير</h2>
+            <div id="recordDetailContent"></div>
+            <div class="modal-actions">
+                <button class="btn btn-gold-outline" id="closeRecordView">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // =====================================================================
+        // أدوات مساعدة
+        // =====================================================================
+        const Utils = {
+            today: () => {
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localISOTime = new Date(now.getTime() - offset).toISOString();
+                return localISOTime.split('T')[0];
+            },
+            nowISO: () => new Date().toISOString(),
+            toast: (msg, dur = 2800) => {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.classList.add('show');
+                clearTimeout(el._timer);
+                el._timer = setTimeout(() => el.classList.remove('show'), dur);
+            },
+            parseNum: (v, def = 0) => { const n = parseFloat(v); return isNaN(n) ? def : n; },
+            round2: (v) => Math.round((v + Number.EPSILON) * 100) / 100,
+            formatNum: (v) => v.toFixed(2),
+            generateId: () => 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            escape: (s) => {
+                if (!s) return '';
+                const m = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                return s.replace(/[&<>"']/g, c => m[c]);
+            },
+            addDays: (dateStr, days) => {
+                const d = new Date(dateStr);
+                d.setDate(d.getDate() + days);
+                return d.toISOString().split('T')[0];
+            },
+            arabicDays: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+            getArabicDay: (dateStr) => {
+                const d = new Date(dateStr);
+                return Utils.arabicDays[d.getDay()];
+            },
+            formatDateWithDay: (dateStr) => {
+                const parts = dateStr.split('-');
+                return `${Utils.getArabicDay(dateStr)} ${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
+            }
+        };
+
+        // =====================================================================
+        // بصمة الجهاز (Fingerprint)
+        // =====================================================================
+        function getDeviceFingerprint() {
+            let ua = navigator.userAgent;
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Cwm fjordbank glyphs vext quiz, 😃', 2, 15);
+            let fp = canvas.toDataURL();
+            return CryptoJS.SHA256(ua + fp).toString();
+        }
+
+        // =====================================================================
+        // نظام التفعيل (Activation)
+        // =====================================================================
+        const Activation = {
+            SECRET_KEY: (function() {
+                const part1 = "GyYbHhYdFgQCEhYGAg8RGBYLFhA=";
+                const part2 = "5A";
+                const _xorKey = parseInt(part2, 16);
+                let decoded = atob(part1);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    result += String.fromCharCode(decoded.charCodeAt(i) ^ _xorKey);
+                }
+                return result;
+            })(),
+            generateCode(phone, fingerprint, period) {
+                const plan = "forever";
+                const data = phone + "|" + plan + "|" + fingerprint + "|" + period;
+                const hash = CryptoJS.HmacSHA256(data, this.SECRET_KEY);
+                const hex = hash.toString(CryptoJS.enc.Hex);
+                const num = BigInt("0x" + hex);
+                return Number(num % 100000000n).toString().padStart(8, '0');
+            },
+            verify(phone, fingerprint, period, code) {
+                return this.generateCode(phone, fingerprint, period) === code;
+            }
+        };
+
+        // =====================================================================
+        // قاعدة البيانات (IndexedDB)
+        // =====================================================================
+        const DB = {
+            _db: null,
+            _name: 'HasbaliDailyDB',
+            _version: 4,
+            open: () => new Promise((res, rej) => {
+                const req = indexedDB.open(DB._name, DB._version);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('days')) {
+                        d.createObjectStore('days', { keyPath: 'date' });
+                    }
+                    if (!d.objectStoreNames.contains('records')) {
+                        d.createObjectStore('records', { keyPath: 'id' });
+                    }
+                    if (!d.objectStoreNames.contains('shiftBackups')) {
+                        d.createObjectStore('shiftBackups', { keyPath: 'id' });
+                    }
+                    if (!d.objectStoreNames.contains('settings')) {
+                        d.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = (e) => { DB._db = e.target.result;
+                    res(DB._db); };
+                req.onerror = (e) => rej(e.target.error);
+            }),
+            getDay: async (date) => {
+                try {
+                    const tx = DB._db.transaction('days', 'readonly');
+                    const store = tx.objectStore('days');
+                    return await new Promise((res, rej) => {
+                        const req = store.get(date);
+                        req.onsuccess = () => res(req.result);
+                        req.onerror = () => rej(req.error);
+                    });
+                } catch (e) { return null; }
+            },
+            saveDay: async (dayData) => {
+                const tx = DB._db.transaction('days', 'readwrite');
+                const store = tx.objectStore('days');
+                await store.put(dayData);
+                await new Promise((res, rej) => { tx.oncomplete = res;
+                    tx.onerror = rej; });
+            },
+            getAllDays: async () => {
+                const tx = DB._db.transaction('days', 'readonly');
+                const store = tx.objectStore('days');
+                return await new Promise((res, rej) => {
+                    const req = store.getAll();
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                });
+            },
+            getDaysInRange: async (from, to) => {
+                const all = await DB.getAllDays();
+                return all.filter(d => d.date >= from && d.date <= to).sort((a, b) => a.date.localeCompare(b.date));
+            },
+            saveRecord: async (record) => {
+                const tx = DB._db.transaction('records', 'readwrite');
+                const store = tx.objectStore('records');
+                await store.put(record);
+                await new Promise((res, rej) => { tx.oncomplete = res;
+                    tx.onerror = rej; });
+            },
+            getRecords: async () => {
+                const tx = DB._db.transaction('records', 'readonly');
+                const store = tx.objectStore('records');
+                return await new Promise((res, rej) => {
+                    const req = store.getAll();
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                });
+            },
+            deleteRecord: async (id) => {
+                const tx = DB._db.transaction('records', 'readwrite');
+                const store = tx.objectStore('records');
+                await store.delete(id);
+                await new Promise((res, rej) => { tx.oncomplete = res;
+                    tx.onerror = rej; });
+            },
+            saveShiftBackup: async (shiftNumber, date, data) => {
+                const id = `shift_${shiftNumber}_${date}`;
+                const tx = DB._db.transaction('shiftBackups', 'readwrite');
+                const store = tx.objectStore('shiftBackups');
+                await store.put({ id, shiftNumber, date, data });
+                await new Promise((res, rej) => { tx.oncomplete = res;
+                    tx.onerror = rej; });
+            },
+            getShiftBackup: async (shiftNumber, date) => {
+                const id = `shift_${shiftNumber}_${date}`;
+                try {
+                    const tx = DB._db.transaction('shiftBackups', 'readonly');
+                    const store = tx.objectStore('shiftBackups');
+                    return await new Promise((res, rej) => {
+                        const req = store.get(id);
+                        req.onsuccess = () => res(req.result);
+                        req.onerror = () => rej(req.error);
+                    });
+                } catch (e) { return null; }
+            },
+            deleteShiftBackup: async (shiftNumber, date) => {
+                const id = `shift_${shiftNumber}_${date}`;
+                try {
+                    const tx = DB._db.transaction('shiftBackups', 'readwrite');
+                    const store = tx.objectStore('shiftBackups');
+                    await store.delete(id);
+                    await new Promise((res, rej) => { tx.oncomplete = res;
+                        tx.onerror = rej; });
+                } catch (e) {}
+            },
+            getSetting: async (key) => {
+                try {
+                    const tx = DB._db.transaction('settings', 'readonly');
+                    const store = tx.objectStore('settings');
+                    return await new Promise((res, rej) => {
+                        const req = store.get(key);
+                        req.onsuccess = () => res(req.result);
+                        req.onerror = () => rej(req.error);
+                    });
+                } catch { return null; }
+            },
+            saveSetting: async (key, value) => {
+                const tx = DB._db.transaction('settings', 'readwrite');
+                const store = tx.objectStore('settings');
+                await store.put({ id: key, value });
+                await new Promise((res, rej) => { tx.oncomplete = res;
+                    tx.onerror = rej; });
+            }
+        };
+
+        // =====================================================================
+        // التطبيق الرئيسي
+        // =====================================================================
+        const App = {
+            shiftData: { 1: { invoices: [] }, 2: { invoices: [] }, 3: { invoices: [] } },
+            currentReportData: null,
+
+            init: async () => {
+                await DB.open();
+
+                // التحقق من حالة التفعيل والتجربة
+                const isActivated = await DB.getSetting('isActivated');
+                const trialEnd = await DB.getSetting('trialEnd');
+                const now = new Date().getTime();
+                let trialValid = false;
+                if (trialEnd && trialEnd.value) {
+                    trialValid = new Date(trialEnd.value).getTime() > now;
+                }
+                let canEnter = false;
+                if (isActivated && isActivated.value === true) {
+                    canEnter = true;
+                } else if (trialValid) {
+                    canEnter = true;
+                }
+
+                const welcome = document.getElementById('welcomeScreen');
+                const app = document.getElementById('app');
+
+                if (canEnter) {
+                    welcome.classList.remove('visible');
+                    app.style.display = 'flex';
+                    document.getElementById('splashScreen').classList.add('hidden');
+
+                    const today = Utils.today();
+                    const storedDate = localStorage.getItem('selectedDate') || today;
+                    document.getElementById('selectedDate').value = storedDate;
+                    document.getElementById('currentDateDisplay').textContent = storedDate;
+
+                    App.buildShiftCards();
+                    await App.loadDay(storedDate);
+                    App.bindEvents();
+                    await App.loadRecords();
+
+                    document.getElementById('reportDate').value = storedDate;
+                    document.getElementById('weekEnd').value = storedDate;
+                    document.getElementById('weekDays').value = 7;
+                    setTimeout(() => {
+                        App.showDailyReport(storedDate);
+                        App.showWeeklyReport(storedDate, 7);
+                    }, 300);
+
+                    // ===== تسجيل Service Worker وتفعيل زر التثبيت =====
+                    App.registerServiceWorker();
+                    App.setupInstallButton();
+
+                } else {
+                    welcome.classList.add('visible');
+                    app.style.display = 'none';
+                    document.getElementById('splashScreen').classList.add('hidden');
+                    if (trialEnd && trialEnd.value && !trialValid) {
+                        document.getElementById('trialExpiredMsg').style.display = 'block';
+                        document.getElementById('startTrialBtn').disabled = true;
+                        document.getElementById('startTrialBtn').textContent = '⛔ انتهت التجربة';
+                    } else {
+                        document.getElementById('trialExpiredMsg').style.display = 'none';
+                        document.getElementById('startTrialBtn').disabled = false;
+                    }
+                }
+                App.bindWelcomeEvents();
+            },
+
+            // ----- تسجيل Service Worker -----
+            registerServiceWorker: () => {
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('./sw.js')
+                            .then((registration) => {
+                                console.log('✅ Service Worker مسجل بنجاح:', registration);
+                            })
+                            .catch((error) => {
+                                console.error('❌ فشل تسجيل Service Worker:', error);
+                            });
+                    });
+                }
+            },
+
+            // ----- إعداد زر التثبيت -----
+            setupInstallButton: () => {
+                let deferredPrompt = null;
+                const installBtn = document.getElementById('installBtn');
+                const installWrapper = document.getElementById('installWrapper');
+
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    installWrapper.classList.add('show');
+                });
+
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const result = await deferredPrompt.userChoice;
+                        if (result.outcome === 'accepted') {
+                            Utils.toast('✅ تم تثبيت التطبيق بنجاح!');
+                            installWrapper.classList.remove('show');
+                        } else {
+                            Utils.toast('❌ تم إلغاء التثبيت');
+                        }
+                        deferredPrompt = null;
+                    } else {
+                        // إذا لم يظهر الـ prompt نوجه المستخدم للتثبيت يدوياً
+                        Utils.toast('📲 استخدم قائمة المتصفح لإضافة التطبيق إلى الشاشة الرئيسية');
+                    }
+                });
+
+                // عند اكتمال التثبيت
+                window.addEventListener('appinstalled', () => {
+                    installWrapper.classList.remove('show');
+                    Utils.toast('🎉 شكراً لتثبيت تطبيق احسبلي+');
+                });
+            },
+
+            buildShiftCards: () => {
+                const grid = document.getElementById('dailyGrid');
+                grid.innerHTML = '';
+                const shiftNames = ['الوردية الأولى', 'الوردية الثانية', 'الوردية الثالثة'];
+                for (let i = 1; i <= 3; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'shift-card state-editing';
+                    card.dataset.shift = i;
+                    card.innerHTML = `
+                        <div class="shift-title">${shiftNames[i-1]}</div>
+                        <div class="shift-fields">
+                            <div class="form-group">
+                                <label>💰 الصندوق</label>
+                                <input type="number" class="shift-cash" step="0.01" min="0" placeholder="0.00" />
+                            </div>
+                            <div class="form-group">
+                                <label>🌾 الغلة</label>
+                                <input type="number" class="shift-yield" step="0.01" min="0" placeholder="0.00" />
+                            </div>
+                            <div class="form-group">
+                                <label>📄 إجمالي الفواتير (تلقائي)</label>
+                                <input type="text" class="shift-invoices-total-display" readonly style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:#f5a623;font-weight:700;" />
+                            </div>
+                        </div>
+                        <div style="border-top:1px solid rgba(255,255,255,0.06);margin:4px 0;padding-top:6px;">
+                            <div style="font-size:12px;color:#a8a6b0;margin-bottom:4px;">📋 إضافة فاتورة</div>
+                            <div class="invoice-entry">
+                                <input type="text" class="invoice-name" placeholder="اسم/ملاحظات" />
+                                <input type="number" class="invoice-amount" step="0.01" min="0" placeholder="القيمة" />
+                                <button class="btn btn-gold-outline btn-sm add-invoice-btn">➕ إضافة</button>
+                            </div>
+                            <div class="invoice-list" id="invoiceList-${i}"></div>
+                            <div class="shift-invoices-total">مجموع الفواتير: <span id="shiftInvoicesTotal-${i}">0.00</span></div>
+                        </div>
+                        <div class="shift-actions">
+                            <button class="btn btn-gold btn-sm save-shift-btn">💾 حفظ الوردية</button>
+                            <button class="btn btn-gold-outline btn-sm edit-shift-btn" style="display:none;">✏️ تعديل</button>
+                            <button class="btn btn-gold-outline btn-sm undo-shift-btn" data-shift="${i}">↩️ تراجع</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                    App.shiftData[i].invoices = [];
+                }
+            },
+
+            setShiftState: (shiftNumber, state) => {
+                const card = document.querySelector(`.shift-card[data-shift="${shiftNumber}"]`);
+                if (!card) return;
+                card.classList.remove('state-editing', 'state-saved');
+                card.classList.add(`state-${state}`);
+                const saveBtn = card.querySelector('.save-shift-btn');
+                const editBtn = card.querySelector('.edit-shift-btn');
+                const inputs = card.querySelectorAll('.shift-cash, .shift-yield, .invoice-name, .invoice-amount');
+                const addBtn = card.querySelector('.add-invoice-btn');
+
+                if (state === 'saved') {
+                    saveBtn.style.display = 'none';
+                    editBtn.style.display = 'inline-block';
+                    inputs.forEach(el => el.disabled = true);
+                    addBtn.disabled = true;
+                } else {
+                    saveBtn.style.display = 'inline-block';
+                    editBtn.style.display = 'none';
+                    inputs.forEach(el => el.disabled = false);
+                    addBtn.disabled = false;
+                }
+            },
+
+            loadDay: async (date) => {
+                const data = await DB.getDay(date);
+                const isNewDay = !data || Object.keys(data).length === 1;
+
+                for (let i = 1; i <= 3; i++) {
+                    const card = document.querySelector(`.shift-card[data-shift="${i}"]`);
+                    if (isNewDay || !data[`shift${i}`]) {
+                        // تصفير
+                        card.querySelector('.shift-cash').value = '';
+                        card.querySelector('.shift-yield').value = '';
+                        App.shiftData[i].invoices = [];
+                        App.renderInvoices(i, true);
+                        App.setShiftState(i, 'editing');
+                    } else {
+                        const shift = data[`shift${i}`];
+                        card.querySelector('.shift-cash').value = shift.cash || '';
+                        card.querySelector('.shift-yield').value = shift.yield || '';
+                        App.shiftData[i].invoices = shift.invoices ? shift.invoices.map(inv => ({ ...inv })) : [];
+                        App.renderInvoices(i, true);
+                        App.setShiftState(i, 'saved');
+                    }
+                }
+                await App.updateSummary();
+                document.getElementById('currentDateDisplay').textContent = date;
+            },
+
+            renderInvoices: (shiftNumber, skipSummaryUpdate = false) => {
+                const list = document.getElementById(`invoiceList-${shiftNumber}`);
+                const totalSpan = document.getElementById(`shiftInvoicesTotal-${shiftNumber}`);
+                const displayInput = document.querySelector(
+                    `.shift-card[data-shift="${shiftNumber}"] .shift-invoices-total-display`);
+                const invoices = App.shiftData[shiftNumber].invoices || [];
+                let html = '';
+                let total = 0;
+                invoices.forEach((inv, idx) => {
+                    total += inv.amount || 0;
+                    html += `
+                        <div class="invoice-item">
+                            <span class="inv-name">${Utils.escape(inv.name || 'بدون اسم')}</span>
+                            <span class="inv-amount">${Utils.formatNum(inv.amount)}</span>
+                            <button class="inv-del" data-shift="${shiftNumber}" data-idx="${idx}">✕</button>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+                total = Utils.round2(total);
+                totalSpan.textContent = Utils.formatNum(total);
+                if (displayInput) displayInput.value = Utils.formatNum(total);
+                list.querySelectorAll('.inv-del').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const s = parseInt(this.dataset.shift);
+                        const idx = parseInt(this.dataset.idx);
+                        App.shiftData[s].invoices.splice(idx, 1);
+                        App.renderInvoices(s);
+                        App.updateSummary();
+                    });
+                });
+                if (!skipSummaryUpdate) App.updateSummary();
+            },
+
+            addInvoice: (shiftNumber) => {
+                const card = document.querySelector(`.shift-card[data-shift="${shiftNumber}"]`);
+                const nameInput = card.querySelector('.invoice-name');
+                const amountInput = card.querySelector('.invoice-amount');
+                const name = nameInput.value.trim() || 'فاتورة';
+                const amount = Utils.parseNum(amountInput.value);
+                if (amount <= 0) {
+                    Utils.toast('⚠️ قيمة الفاتورة يجب أن تكون أكبر من صفر');
+                    return;
+                }
+                App.shiftData[shiftNumber].invoices.push({ id: Utils.generateId(), name, amount });
+                nameInput.value = '';
+                amountInput.value = '';
+                App.renderInvoices(shiftNumber);
+                App.updateSummary();
+                Utils.toast(`✅ تم إضافة فاتورة للوردية ${shiftNumber}`);
+            },
+
+            updateSummary: async () => {
+                const date = document.getElementById('selectedDate').value;
+                if (!date) return;
+                const data = await DB.getDay(date);
+                let totalCash = 0,
+                    totalYield = 0,
+                    totalInvoices = 0;
+                if (data) {
+                    for (let i = 1; i <= 3; i++) {
+                        const s = data[`shift${i}`] || { cash: 0, yield: 0, invoices: [] };
+                        totalCash += s.cash || 0;
+                        totalYield += s.yield || 0;
+                        const invs = s.invoices || [];
+                        totalInvoices += invs.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+                    }
+                }
+                document.getElementById('sumCash').textContent = Utils.formatNum(totalCash);
+                document.getElementById('sumYield').textContent = Utils.formatNum(totalYield);
+                document.getElementById('sumInvoices').textContent = Utils.formatNum(totalInvoices);
+            },
+
+            saveShift: async (shiftNumber, date = null) => {
+                if (!date) date = document.getElementById('selectedDate').value;
+                if (!date) { Utils.toast('⚠️ اختر تاريخاً أولاً'); return; }
+                const card = document.querySelector(`.shift-card[data-shift="${shiftNumber}"]`);
+                const cash = Utils.parseNum(card.querySelector('.shift-cash').value);
+                const yieldVal = Utils.parseNum(card.querySelector('.shift-yield').value);
+                const invoices = App.shiftData[shiftNumber].invoices || [];
+                if (cash < 0 || yieldVal < 0) {
+                    Utils.toast('⚠️ القيم يجب أن تكون موجبة');
+                    return;
+                }
+                const backupData = { cash, yield: yieldVal, invoices: invoices.map(inv => ({ ...inv })) };
+                await DB.saveShiftBackup(shiftNumber, date, backupData);
+
+                let existing = await DB.getDay(date);
+                if (!existing) existing = { date };
+                existing[`shift${shiftNumber}`] = { cash, yield: yieldVal, invoices: invoices.map(inv => ({ ...inv })) };
+                await DB.saveDay(existing);
+
+                App.setShiftState(shiftNumber, 'saved');
+                await App.updateSummary();
+                Utils.toast(`✅ تم حفظ الوردية ${shiftNumber}`);
+            },
+
+            saveAllShifts: async (date) => {
+                let hasData = false;
+                for (let i = 1; i <= 3; i++) {
+                    const card = document.querySelector(`.shift-card[data-shift="${i}"]`);
+                    const cash = card.querySelector('.shift-cash').value;
+                    const yieldVal = card.querySelector('.shift-yield').value;
+                    const invoices = App.shiftData[i].invoices || [];
+                    if (cash || yieldVal || invoices.length > 0) {
+                        hasData = true;
+                        await App.saveShift(i, date);
+                    }
+                }
+                if (hasData) {
+                    Utils.toast(`✅ تم حفظ جميع الورديات تحت تاريخ ${date}`);
+                } else {
+                    Utils.toast(`📭 لا توجد بيانات لحفظها تحت تاريخ ${date}`);
+                }
+                return hasData;
+            },
+
+            editShift: async (shiftNumber) => {
+                const date = document.getElementById('selectedDate').value;
+                if (!date) return;
+                App.setShiftState(shiftNumber, 'editing');
+                const backup = await DB.getShiftBackup(shiftNumber, date);
+                if (backup) {
+                    const data = backup.data;
+                    const card = document.querySelector(`.shift-card[data-shift="${shiftNumber}"]`);
+                    card.querySelector('.shift-cash').value = data.cash || '';
+                    card.querySelector('.shift-yield').value = data.yield || '';
+                    App.shiftData[shiftNumber].invoices = data.invoices.map(inv => ({ ...inv }));
+                    App.renderInvoices(shiftNumber);
+                    await DB.deleteShiftBackup(shiftNumber, date);
+                }
+                Utils.toast(`✏️ يمكنك تعديل الوردية ${shiftNumber}`);
+            },
+
+            undoShift: async (shiftNumber) => {
+                const date = document.getElementById('selectedDate').value;
+                if (!date) return;
+                const backup = await DB.getShiftBackup(shiftNumber, date);
+                if (!backup) {
+                    Utils.toast('⚠️ لا توجد نسخة احتياطية للتراجع');
+                    return;
+                }
+                const data = backup.data;
+                const card = document.querySelector(`.shift-card[data-shift="${shiftNumber}"]`);
+                card.querySelector('.shift-cash').value = data.cash || '';
+                card.querySelector('.shift-yield').value = data.yield || '';
+                App.shiftData[shiftNumber].invoices = data.invoices.map(inv => ({ ...inv }));
+                App.renderInvoices(shiftNumber);
+                App.setShiftState(shiftNumber, 'editing');
+                await App.updateSummary();
+                Utils.toast(`↩️ تم التراجع عن الوردية ${shiftNumber}`);
+                await DB.deleteShiftBackup(shiftNumber, date);
+            },
+
+            resetDay: async (date) => {
+                // تصفير الحقول وإعادة الحالة إلى editing
+                for (let i = 1; i <= 3; i++) {
+                    const card = document.querySelector(`.shift-card[data-shift="${i}"]`);
+                    card.querySelector('.shift-cash').value = '';
+                    card.querySelector('.shift-yield').value = '';
+                    App.shiftData[i].invoices = [];
+                    App.renderInvoices(i, true);
+                    App.setShiftState(i, 'editing');
+                    await DB.deleteShiftBackup(i, date);
+                }
+                await App.updateSummary();
+            },
+
+            // ===== التقارير =====
+            showDailyReport: async (date) => {
+                const data = await DB.getDay(date);
+                const container = document.getElementById('dailyReportContainer');
+                if (!data) {
+                    container.innerHTML =
+                        `<div style="text-align:center;color:#a8a6b0;padding:20px;">📭 لا توجد بيانات لهذا اليوم</div>`;
+                    return;
+                }
+                let html =
+                    `<div style="background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;border:1px solid rgba(255,215,0,0.08);">`;
+                let totalCash = 0,
+                    totalYield = 0,
+                    totalInvoices = 0;
+                for (let i = 1; i <= 3; i++) {
+                    const s = data[`shift${i}`] || { cash: 0, yield: 0, invoices: [] };
+                    const invTotal = (s.invoices || []).reduce((sum, inv) => sum + (inv.amount || 0), 0);
+                    totalCash += s.cash || 0;
+                    totalYield += s.yield || 0;
+                    totalInvoices += invTotal;
+                    html += `
+                        <div class="daily-detail-box">
+                            <div class="shift-title">الوردية ${i}</div>
+                            <div class="row"><span>💰 الصندوق</span><span class="val">${Utils.formatNum(s.cash)}</span></div>
+                            <div class="row"><span>🌾 الغلة</span><span class="val">${Utils.formatNum(s.yield)}</span></div>
+                            <div class="row"><span>📄 إجمالي الفواتير</span><span class="val">${Utils.formatNum(invTotal)}</span></div>
+                            ${(s.invoices && s.invoices.length) ? `
+                                <div class="inv-detail">
+                                    <strong>تفاصيل الفواتير:</strong>
+                                    ${s.invoices.map(inv => `<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${Utils.escape(inv.name || 'بدون اسم')}</span><span style="color:#f5a623;">${Utils.formatNum(inv.amount)}</span></div>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+                totalCash = Utils.round2(totalCash);
+                totalYield = Utils.round2(totalYield);
+                totalInvoices = Utils.round2(totalInvoices);
+                html += `<div class="report-totals">
+                    <div class="stat"><span class="label">مجمل الصندوق</span><span class="value">${Utils.formatNum(totalCash)}</span></div>
+                    <div class="stat"><span class="label">مجمل الغلة</span><span class="value">${Utils.formatNum(totalYield)}</span></div>
+                    <div class="stat"><span class="label">مجمل الفواتير</span><span class="value">${Utils.formatNum(totalInvoices)}</span></div>
+                </div>`;
+                html += `</div>`;
+                container.innerHTML = html;
+            },
+
+            showWeeklyReport: async (endDate, daysCount) => {
+                const start = new Date(endDate);
+                start.setDate(start.getDate() - daysCount + 1);
+                const startStr = start.toISOString().split('T')[0];
+                const endStr = endDate;
+
+                const existingDays = await DB.getDaysInRange(startStr, endStr);
+                const allDates = [];
+                let current = new Date(startStr);
+                const last = new Date(endStr);
+                while (current <= last) {
+                    allDates.push(current.toISOString().split('T')[0]);
+                    current.setDate(current.getDate() + 1);
+                }
+
+                const days = allDates.map(date => {
+                    const found = existingDays.find(d => d.date === date);
+                    return found || { date, shift1: {}, shift2: {}, shift3: {} };
+                });
+
+                const container = document.getElementById('weeklyReportContainer');
+                let shiftTotals = { 1: { cash: 0, yield: 0, invoices: 0 }, 2: { cash: 0, yield: 0, invoices: 0 }, 3: { cash: 0,
+                        yield: 0, invoices: 0 } };
+                let totalCash = 0,
+                    totalYield = 0,
+                    totalInvoices = 0;
+
+                for (let d of days) {
+                    for (let i = 1; i <= 3; i++) {
+                        const s = d[`shift${i}`] || {};
+                        shiftTotals[i].cash += s.cash || 0;
+                        shiftTotals[i].yield += s.yield || 0;
+                        const invs = s.invoices || [];
+                        const invTotal = invs.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+                        shiftTotals[i].invoices += invTotal;
+                    }
+                }
+
+                for (let i = 1; i <= 3; i++) {
+                    shiftTotals[i].cash = Utils.round2(shiftTotals[i].cash);
+                    shiftTotals[i].yield = Utils.round2(shiftTotals[i].yield);
+                    shiftTotals[i].invoices = Utils.round2(shiftTotals[i].invoices);
+                }
+                totalCash = Utils.round2(shiftTotals[1].cash + shiftTotals[2].cash + shiftTotals[3].cash);
+                totalYield = Utils.round2(shiftTotals[1].yield + shiftTotals[2].yield + shiftTotals[3].yield);
+                totalInvoices = Utils.round2(shiftTotals[1].invoices + shiftTotals[2].invoices + shiftTotals[3].invoices);
+
+                App.currentReportData = {
+                    start: startStr,
+                    end: endStr,
+                    days: days.map(d => ({ ...d })),
+                    shiftTotals: JSON.parse(JSON.stringify(shiftTotals)),
+                    totals: { cash: totalCash, yield: totalYield, invoices: totalInvoices }
+                };
+
+                let html =
+                    `<div style="background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;border:1px solid rgba(255,215,0,0.08);">`;
+                html +=
+                    `<div style="font-size:14px;color:#a8a6b0;margin-bottom:8px;">📅 الفترة من ${startStr} إلى ${endStr} (${daysCount} يوم)</div>`;
+
+                html += `<div style="font-weight:600;color:#f5e7c8;margin-bottom:8px;">📋 تفاصيل الأيام (كل وردية على حدة)</div>`;
+                html += `<div class="table-wrap"><table><thead><tr><th>اليوم</th><th>التاريخ</th>`;
+                for (let i = 1; i <= 3; i++) {
+                    html +=
+                        `<th>الوردية ${i}<br><span style="font-weight:normal;font-size:12px;">صندوق / غلة / فواتير</span></th>`;
+                }
+                html += `</tr></thead><tbody>`;
+
+                for (let d of days) {
+                    const dayName = Utils.getArabicDay(d.date);
+                    html += `<tr><td>${dayName}</td><td>${d.date}</td>`;
+                    for (let i = 1; i <= 3; i++) {
+                        const s = d[`shift${i}`] || {};
+                        const cash = Utils.round2(s.cash || 0);
+                        const yieldVal = Utils.round2(s.yield || 0);
+                        const invs = s.invoices || [];
+                        const invTotal = Utils.round2(invs.reduce((sum, inv) => sum + (inv.amount || 0), 0));
+                        html +=
+                            `<td>${Utils.formatNum(cash)} / ${Utils.formatNum(yieldVal)} / ${Utils.formatNum(invTotal)}</td>`;
+                    }
+                    html += `</tr>`;
+                }
+                html += `</tbody></table></div>`;
+
+                html += `<div style="font-weight:600;color:#f5e7c8;margin-top:16px;margin-bottom:8px;">📊 مجمل الورديات خلال الفترة</div>`;
+                html += `<div class="weekly-shifts-summary">`;
+                const shiftNames = ['الوردية الأولى', 'الوردية الثانية', 'الوردية الثالثة'];
+                for (let i = 1; i <= 3; i++) {
+                    html += `
+                        <div class="shift-card-summary">
+                            <div class="title">${shiftNames[i-1]}</div>
+                            <div class="row"><span>💰 الصندوق</span><span class="val">${Utils.formatNum(shiftTotals[i].cash)}</span></div>
+                            <div class="row"><span>🌾 الغلة</span><span class="val">${Utils.formatNum(shiftTotals[i].yield)}</span></div>
+                            <div class="row"><span>📄 الفواتير</span><span class="val">${Utils.formatNum(shiftTotals[i].invoices)}</span></div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+
+                html += `<div class="report-totals">
+                    <div class="stat"><span class="label">💰 مجمل الصندوق (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totalCash)}</span></div>
+                    <div class="stat"><span class="label">🌾 مجمل الغلة (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totalYield)}</span></div>
+                    <div class="stat"><span class="label">📄 مجمل الفواتير (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totalInvoices)}</span></div>
+                </div>`;
+
+                html += `</div>`;
+                container.innerHTML = html;
+                container._weekData = days;
+                container._totals = { cash: totalCash, yield: totalYield, invoices: totalInvoices };
+                container._shiftTotals = shiftTotals;
+            },
+
+            saveCurrentReport: async (name) => {
+                if (!App.currentReportData) {
+                    Utils.toast('⚠️ قم بعرض تقرير أسبوعي أولاً');
+                    return;
+                }
+                const record = {
+                    id: Utils.generateId(),
+                    name: name.trim() || 'تقرير بدون اسم',
+                    savedAt: Utils.nowISO(),
+                    start: App.currentReportData.start,
+                    end: App.currentReportData.end,
+                    days: App.currentReportData.days.map(d => ({ ...d })),
+                    shiftTotals: JSON.parse(JSON.stringify(App.currentReportData.shiftTotals)),
+                    totals: { ...App.currentReportData.totals }
+                };
+                await DB.saveRecord(record);
+                Utils.toast('✅ تم حفظ التقرير في السجلات');
+                await App.loadRecords();
+            },
+
+            loadRecords: async () => {
+                const records = await DB.getRecords();
+                const container = document.getElementById('recordsList');
+                if (!records || !records.length) {
+                    container.innerHTML =
+                        `<div style="text-align:center;color:#a8a6b0;padding:20px;">لا توجد سجلات محفوظة</div>`;
+                    return;
+                }
+                records.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+                let html = '';
+                for (let rec of records) {
+                    const savedDate = new Date(rec.savedAt).toLocaleDateString('ar');
+                    html += `
+                        <div class="record-card" data-id="${rec.id}">
+                            <div class="info">
+                                <div class="name">📌 ${Utils.escape(rec.name)}</div>
+                                <div class="meta">🕒 ${savedDate} | 📅 ${rec.start} → ${rec.end}</div>
+                            </div>
+                            <div class="actions">
+                                <button class="btn btn-gold-outline btn-sm view-record-btn" data-id="${rec.id}">👁️ عرض</button>
+                                <button class="btn btn-danger btn-sm delete-record-btn" data-id="${rec.id}">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+                container.querySelectorAll('.view-record-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        App.viewRecord(id);
+                    });
+                });
+                container.querySelectorAll('.delete-record-btn').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        const id = this.dataset.id;
+                        if (!confirm('هل تريد حذف هذا السجل نهائياً؟')) return;
+                        await DB.deleteRecord(id);
+                        Utils.toast('🗑️ تم حذف السجل');
+                        await App.loadRecords();
+                    });
+                });
+            },
+
+            viewRecord: async (id) => {
+                const records = await DB.getRecords();
+                const rec = records.find(r => r.id === id);
+                if (!rec) { Utils.toast('⚠️ السجل غير موجود'); return; }
+
+                const container = document.getElementById('recordDetailContent');
+                let html =
+                    `<div style="font-size:14px;color:#a8a6b0;margin-bottom:8px;">📅 الفترة: ${rec.start} → ${rec.end}</div>`;
+                html += `<div style="font-weight:600;color:#f5e7c8;margin-bottom:8px;">📋 تفاصيل الأيام (كل وردية على حدة)</div>`;
+                html += `<div class="table-wrap"><table><thead><tr><th>اليوم</th><th>التاريخ</th>`;
+                for (let i = 1; i <= 3; i++) {
+                    html +=
+                        `<th>الوردية ${i}<br><span style="font-weight:normal;font-size:12px;">صندوق / غلة / فواتير</span></th>`;
+                }
+                html += `</tr></thead><tbody>`;
+
+                for (let d of rec.days) {
+                    const dayName = Utils.getArabicDay(d.date);
+                    html += `<tr><td>${dayName}</td><td>${d.date}</td>`;
+                    for (let i = 1; i <= 3; i++) {
+                        const s = d[`shift${i}`] || {};
+                        const cash = Utils.round2(s.cash || 0);
+                        const yieldVal = Utils.round2(s.yield || 0);
+                        const invs = s.invoices || [];
+                        const invTotal = Utils.round2(invs.reduce((sum, inv) => sum + (inv.amount || 0), 0));
+                        html +=
+                            `<td>${Utils.formatNum(cash)} / ${Utils.formatNum(yieldVal)} / ${Utils.formatNum(invTotal)}</td>`;
+                    }
+                    html += `</tr>`;
+                }
+                html += `</tbody></table></div>`;
+
+                html += `<div style="font-weight:600;color:#f5e7c8;margin-top:16px;margin-bottom:8px;">📊 مجمل الورديات</div>`;
+                html += `<div class="weekly-shifts-summary">`;
+                const shiftNames = ['الوردية الأولى', 'الوردية الثانية', 'الوردية الثالثة'];
+                for (let i = 1; i <= 3; i++) {
+                    const st = rec.shiftTotals[i] || { cash: 0, yield: 0, invoices: 0 };
+                    html += `
+                        <div class="shift-card-summary">
+                            <div class="title">${shiftNames[i-1]}</div>
+                            <div class="row"><span>💰 الصندوق</span><span class="val">${Utils.formatNum(st.cash)}</span></div>
+                            <div class="row"><span>🌾 الغلة</span><span class="val">${Utils.formatNum(st.yield)}</span></div>
+                            <div class="row"><span>📄 الفواتير</span><span class="val">${Utils.formatNum(st.invoices)}</span></div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+
+                const totals = rec.totals || { cash: 0, yield: 0, invoices: 0 };
+                html += `<div class="report-totals">
+                    <div class="stat"><span class="label">💰 مجمل الصندوق (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totals.cash)}</span></div>
+                    <div class="stat"><span class="label">🌾 مجمل الغلة (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totals.yield)}</span></div>
+                    <div class="stat"><span class="label">📄 مجمل الفواتير (الكلي)</span><span class="value" style="font-size:22px;">${Utils.formatNum(totals.invoices)}</span></div>
+                </div>`;
+
+                container.innerHTML = html;
+                document.getElementById('viewRecordModal').classList.add('open');
+                document.getElementById('closeRecordView').onclick = () => document.getElementById('viewRecordModal')
+                    .classList.remove('open');
+            },
+
+            exportWeekCSV: () => {
+                const container = document.getElementById('weeklyReportContainer');
+                const days = container._weekData;
+                if (!days || !days.length) { Utils.toast('⚠️ لا توجد بيانات للتصدير'); return; }
+
+                let csv = '\uFEFFاليوم,التاريخ';
+                for (let i = 1; i <= 3; i++) {
+                    csv += `,الوردية ${i} (صندوق),الوردية ${i} (غلة),الوردية ${i} (فواتير)`;
+                }
+                csv += '\n';
+
+                for (let d of days) {
+                    const dayName = Utils.getArabicDay(d.date);
+                    csv += `${dayName},${d.date}`;
+                    for (let i = 1; i <= 3; i++) {
+                        const s = d[`shift${i}`] || {};
+                        const cash = Utils.round2(s.cash || 0);
+                        const yieldVal = Utils.round2(s.yield || 0);
+                        const invs = s.invoices || [];
+                        const invTotal = Utils.round2(invs.reduce((sum, inv) => sum + (inv.amount || 0), 0));
+                        csv += `,${cash.toFixed(2)},${yieldVal.toFixed(2)},${invTotal.toFixed(2)}`;
+                    }
+                    csv += '\n';
+                }
+
+                const shiftTotals = container._shiftTotals || { 1: { cash: 0, yield: 0, invoices: 0 }, 2: { cash: 0,
+                        yield: 0, invoices: 0 }, 3: { cash: 0, yield: 0, invoices: 0 } };
+                csv += `\nالإجمالي,,`;
+                for (let i = 1; i <= 3; i++) {
+                    csv +=
+                        `${shiftTotals[i].cash.toFixed(2)},${shiftTotals[i].yield.toFixed(2)},${shiftTotals[i].invoices.toFixed(2)},`;
+                }
+                csv += '\n';
+
+                const totals = container._totals || { cash: 0, yield: 0, invoices: 0 };
+                csv += `المجموع الكلي,,,${totals.cash.toFixed(2)},${totals.yield.toFixed(2)},${totals.invoices.toFixed(2)}\n`;
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `تقرير_اسبوعي_${Utils.today()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                Utils.toast('✅ تم تصدير CSV');
+            },
+
+            // ===== أحداث التطبيق =====
+            bindEvents: () => {
+                // حدث تغيير التاريخ مع الحفظ التلقائي
+                document.getElementById('selectedDate').addEventListener('change', async function() {
+                    const newDate = this.value;
+                    if (!newDate) return;
+                    const oldDate = localStorage.getItem('selectedDate') || Utils.today();
+                    if (newDate === oldDate) return;
+
+                    // حفظ جميع البيانات تحت التاريخ القديم
+                    await App.saveAllShifts(oldDate);
+
+                    // تصفير الحقول وبدء اليوم الجديد
+                    await App.resetDay(newDate);
+                    await App.loadDay(newDate);
+
+                    // تحديث الواجهة والتقارير
+                    document.getElementById('currentDateDisplay').textContent = newDate;
+                    localStorage.setItem('selectedDate', newDate);
+                    document.getElementById('reportDate').value = newDate;
+                    document.getElementById('weekEnd').value = newDate;
+                    App.showDailyReport(newDate);
+                    App.showWeeklyReport(newDate, parseInt(document.getElementById('weekDays').value) || 7);
+                    Utils.toast(`✅ تم الانتقال إلى يوم ${newDate}`);
+                });
+
+                // التنقل بين التبويبات
+                document.getElementById('bottomNav').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.nav-item');
+                    if (!btn) return;
+                    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    document.getElementById(`panel-${tab}`).classList.add('active');
+                    if (tab === 'reports') {
+                        const date = document.getElementById('selectedDate').value || Utils.today();
+                        document.getElementById('reportDate').value = date;
+                        App.showDailyReport(date);
+                        document.getElementById('weekEnd').value = date;
+                        App.showWeeklyReport(date, parseInt(document.getElementById('weekDays').value) || 7);
+                    }
+                    if (tab === 'records') App.loadRecords();
+                });
+
+                document.querySelectorAll('#reportTabs .tab-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('#reportTabs .tab-btn').forEach(b => b.classList.remove(
+                        'active'));
+                        this.classList.add('active');
+                        const tab = this.dataset.tab;
+                        document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
+                        document.getElementById(tab).classList.add('active');
+                    });
+                });
+
+                document.querySelectorAll('.shift-cash, .shift-yield').forEach(el => {
+                    el.addEventListener('input', App.updateSummary);
+                });
+
+                document.querySelectorAll('.add-invoice-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const card = this.closest('.shift-card');
+                        const shift = parseInt(card.dataset.shift);
+                        App.addInvoice(shift);
+                    });
+                });
+
+                document.querySelectorAll('.invoice-amount').forEach(inp => {
+                    inp.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            const card = this.closest('.shift-card');
+                            const shift = parseInt(card.dataset.shift);
+                            App.addInvoice(shift);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.save-shift-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const card = this.closest('.shift-card');
+                        const shift = parseInt(card.dataset.shift);
+                        App.saveShift(shift);
+                    });
+                });
+
+                document.querySelectorAll('.edit-shift-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const shift = parseInt(this.closest('.shift-card').dataset.shift);
+                        App.editShift(shift);
+                    });
+                });
+
+                document.querySelectorAll('.undo-shift-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const shift = parseInt(this.dataset.shift);
+                        App.undoShift(shift);
+                    });
+                });
+
+                document.getElementById('loadDailyReport').addEventListener('click', () => {
+                    const date = document.getElementById('reportDate').value;
+                    if (!date) { Utils.toast('⚠️ اختر تاريخاً'); return; }
+                    App.showDailyReport(date);
+                });
+
+                document.getElementById('loadWeeklyReport').addEventListener('click', () => {
+                    const end = document.getElementById('weekEnd').value;
+                    const days = parseInt(document.getElementById('weekDays').value) || 7;
+                    if (!end) { Utils.toast('⚠️ اختر تاريخ نهاية الأسبوع'); return; }
+                    App.showWeeklyReport(end, days);
+                    Utils.toast('✅ تم عرض التقرير الأسبوعي');
+                });
+
+                document.getElementById('saveReportBtn').addEventListener('click', () => {
+                    if (!App.currentReportData) {
+                        Utils.toast('⚠️ قم بعرض تقرير أسبوعي أولاً');
+                        return;
+                    }
+                    document.getElementById('reportNameInput').value = '';
+                    document.getElementById('saveReportModal').classList.add('open');
+                });
+
+                document.getElementById('cancelSaveReport').addEventListener('click', () => {
+                    document.getElementById('saveReportModal').classList.remove('open');
+                });
+
+                document.getElementById('confirmSaveReport').addEventListener('click', async () => {
+                    const name = document.getElementById('reportNameInput').value.trim();
+                    document.getElementById('saveReportModal').classList.remove('open');
+                    await App.saveCurrentReport(name);
+                });
+
+                document.getElementById('exportWeekCSV').addEventListener('click', App.exportWeekCSV);
+            },
+
+            // ===== أحداث شاشة الترحيب =====
+            bindWelcomeEvents: () => {
+                const startTrialBtn = document.getElementById('startTrialBtn');
+                const showActivationBtn = document.getElementById('showActivationBtn');
+                const activationFields = document.getElementById('activationFields');
+                const confirmActivateBtn = document.getElementById('confirmActivateBtn');
+                const whatsappBtn = document.getElementById('whatsappRequestBtn');
+                const statusDiv = document.getElementById('welcomeActivationStatus');
+
+                startTrialBtn.addEventListener('click', async function() {
+                    if (this.disabled) return;
+                    const now = new Date();
+                    const end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    await DB.saveSetting('trialEnd', end.toISOString());
+                    await DB.saveSetting('isActivated', false);
+                    Utils.toast('✅ تم بدء التجربة المجانية لمدة 7 أيام');
+                    location.reload();
+                });
+
+                showActivationBtn.addEventListener('click', function() {
+                    const isOpen = activationFields.classList.toggle('open');
+                    this.textContent = isOpen ? '🔒 إخفاء التفعيل' : '🔑 تفعيل الاشتراك';
+                    statusDiv.textContent = '';
+                });
+
+                confirmActivateBtn.addEventListener('click', async function() {
+                    const phone = document.getElementById('welcomePhone').value.trim();
+                    const code = document.getElementById('welcomeCode').value.trim();
+                    const fingerprint = getDeviceFingerprint();
+                    const period = 'forever';
+
+                    if (!phone || phone.length < 10) {
+                        statusDiv.textContent = '⚠️ رقم الهاتف غير صحيح';
+                        statusDiv.style.color = '#ef4444';
+                        return;
+                    }
+                    if (!code || code.length !== 8) {
+                        statusDiv.textContent = '⚠️ الكود يجب أن يكون 8 أرقام';
+                        statusDiv.style.color = '#ef4444';
+                        return;
+                    }
+
+                    const isValid = Activation.verify(phone, fingerprint, period, code);
+                    if (isValid) {
+                        await DB.saveSetting('isActivated', true);
+                        await DB.saveSetting('trialEnd', null);
+                        statusDiv.textContent = '✅ تم التفعيل بنجاح! جاري تحديث التطبيق...';
+                        statusDiv.style.color = '#4ade80';
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        statusDiv.textContent = '❌ الكود غير صحيح. تأكد من رقم الهاتف والبصمة.';
+                        statusDiv.style.color = '#ef4444';
+                    }
+                });
+
+                whatsappBtn.addEventListener('click', function() {
+                    const phone = document.getElementById('welcomePhone').value.trim();
+                    if (!phone || phone.length < 10) {
+                        statusDiv.textContent = '⚠️ يرجى إدخال رقم الهاتف أولاً';
+                        statusDiv.style.color = '#ef4444';
+                        return;
+                    }
+                    const fingerprint = getDeviceFingerprint();
+                    const supportNumber = '0936019079';
+                    const message =
+                        `ارغب بتفعيل احسبلي بلس اليومي%0Aرقم الهاتف: ${phone}%0Aالكود السري: ${fingerprint}`;
+                    const url = `https://wa.me/${supportNumber}?text=${message}`;
+                    window.open(url, '_blank');
+                });
+            }
+        };
+
+        // =====================================================================
+        // بدء التطبيق
+        // =====================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('splashSkipBtn').addEventListener('click', () => {
+                document.getElementById('splashScreen').classList.add('hidden');
+            });
+            App.init();
+        });
+    </script>
+
+</body>
+</html>
