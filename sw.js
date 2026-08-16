@@ -1,15 +1,15 @@
 // =====================================================
 //  Service Worker لتطبيق "احسبلي+ · يومي"
-//  الإصدار: v1.0.0
-//  الاستراتيجية: تخزين مسبق للأساسيات + Stale-While-Revalidate
+//  الإصدار: v2.0.0 (متوافق مع الجذر التام)
+//  الاستراتيجية: تخزين مسبق + Stale-While-Revalidate
 // =====================================================
 
-const CACHE_NAME = 'hasbali-cache-v1';
+const CACHE_NAME = 'hasbali-cache-v2';
 const STATIC_ASSETS = [
-  '/احسبلي.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  './',                          // يخزن index.html تلقائياً
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js'
 ];
 
@@ -23,7 +23,7 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('[SW] ✅ التثبيت اكتمل بنجاح');
-        return self.skipWaiting(); // تفعيل الـ SW فوراً
+        return self.skipWaiting();
       })
       .catch((error) => {
         console.error('[SW] ❌ فشل التخزين:', error);
@@ -47,7 +47,7 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => {
         console.log('[SW] ✅ التفعيل اكتمل، السيطرة على جميع الصفحات');
-        return self.clients.claim(); // يسيطر على الصفحات المفتوحة فوراً
+        return self.clients.claim();
       })
   );
 });
@@ -56,18 +56,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. استراتيجية خاصة لملف HTML (يُخدم من الكاش أولاً، ثم يُحدث في الخلفية)
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+  // 1. استراتيجية خاصة للتنقل (الصفحات الرئيسية)
+  //    نخدم من الكاش أولاً، ثم نحدث في الخلفية
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('/احسبلي.html')
+      caches.match(event.request)
         .then((cachedResponse) => {
-          // إعادة الملف المخبأ فوراً
           const fetchPromise = fetch(event.request)
             .then((networkResponse) => {
-              // تحديث الكاش في الخلفية
               if (networkResponse && networkResponse.status === 200) {
                 caches.open(CACHE_NAME).then((cache) => {
-                  cache.put('/احسبلي.html', networkResponse.clone());
+                  cache.put(event.request, networkResponse.clone());
                 });
               }
               return networkResponse;
@@ -81,13 +80,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. استراتيجية Stale-While-Revalidate للملفات الثابتة (JS, CSS, Images, CDN)
+  // 2. استراتيجية Stale-While-Revalidate للملفات الثابتة
+  //    (JS, CSS, Images, CDN)
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
         const fetchPromise = fetch(event.request)
           .then((networkResponse) => {
-            // تحديث الكاش بنسخة جديدة من الشبكة
             if (networkResponse && networkResponse.status === 200) {
               caches.open(CACHE_NAME).then((cache) => {
                 cache.put(event.request, networkResponse.clone());
@@ -97,20 +96,18 @@ self.addEventListener('fetch', (event) => {
           })
           .catch((error) => {
             console.warn('[SW] ⚠️ فشل جلب المورد:', event.request.url);
-            // إذا كان الملف غير موجود في الكاش نهائياً، نعيد خطأ
             if (!cachedResponse) {
               return new Response('⚠️ غير متاح حالياً', { status: 503 });
             }
             return null;
           });
 
-        // إذا وجد في الكاش، أعده فوراً، وإلا انتظر النتيجة من الشبكة
         return cachedResponse || fetchPromise;
       })
   );
 });
 
-// --- الاستماع لرسائل من التطبيق (لتحديث إصدار الكاش عند الحاجة) ---
+// --- الاستماع لرسائل التحديث ---
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
