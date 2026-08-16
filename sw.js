@@ -4,7 +4,7 @@
 //  الاستراتيجية: تخزين مسبق + Stale-While-Revalidate
 // =====================================================
 
-const CACHE_NAME = 'hasbali-cache-v2';
+const CACHE_NAME = 'hasbali-cache-v3';
 const STATIC_ASSETS = [
   './',                          // يخزن index.html تلقائياً
   './manifest.json',
